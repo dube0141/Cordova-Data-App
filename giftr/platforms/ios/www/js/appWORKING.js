@@ -280,12 +280,13 @@ function loadGiftsForPerson() {
 				option.value = results.rows.item(i).occ_id;
 
 				modalList.appendChild(option);
+
 			}
 		}
 	});
 
 	db.transaction(function (trans) {
-		trans.executeSql('SELECT g.gift_idea, g.purchased, o.occ_name FROM gifts AS g INNER JOIN occasions AS o ON g.occ_id = o.occ_id WHERE person_id = ' + person_id + '', [], transSuccess, transErr);
+		trans.executeSql('SELECT g.gift_idea, o.occ_name FROM gifts AS g INNER JOIN occasions AS o ON g.occ_id = o.occ_id WHERE person_id = ' + person_id + '', [], transSuccess, transErr);
 
 		function transSuccess(trans, results) {
 			personGiftList.innerHTML = "";
@@ -293,8 +294,6 @@ function loadGiftsForPerson() {
 			for (var i = 0; i < results.rows.length; i++) {
 				var li = document.createElement("li");
 				li.id = results.rows.item(i).gift_idea;
-				li.setAttribute("class", results.rows.item(i).occ_name);
-				li.setAttribute("data-role", "s" + results.rows.item(i).purchased);
 				li.innerHTML = results.rows.item(i).gift_idea + " - " + results.rows.item(i).occ_name;
 
 				var mc = new Hammer.Manager(li);
@@ -325,8 +324,9 @@ function loadGiftsForPerson() {
 				mc.on("singletap", function (ev) {
 					document.querySelector("div[data-role='overlay']").style.display = "block";
 					document.querySelector("#gift-status").style.display = "block";
-					addGiftStatus(ev.target);
+					addGiftStatus();
 				});
+
 				personGiftList.appendChild(li);
 			}
 		}
@@ -353,10 +353,13 @@ function loadGiftsForOccasion(personName, occ_id) {
 
 				option.innerHTML = results.rows.item(i).person_name;
 				option.value = occ_id;
+
 				modalList.appendChild(option);
+
 			}
 		}
 	});
+
 
 	db.transaction(function (trans) {
 		trans.executeSql('SELECT g.gift_idea, p.person_name, o.occ_name FROM gifts AS g INNER JOIN people AS p INNER JOIN occasions AS o WHERE g.person_id = p.person_id AND g.occ_id = o.occ_id', [], transSuccess, transErr);
@@ -397,6 +400,8 @@ function loadGiftsForOccasion(personName, occ_id) {
 						var p = ev.target;
 						console.log(p);
 					});
+
+
 					occasionGiftList.appendChild(li);
 				}
 			}
@@ -504,41 +509,9 @@ function addGiftForOccasion() {
 	});
 }
 
-function addGiftStatus(evTarg) {
-	var saveButton = document.querySelector("#gift-status .btnSave");
-	var radioYes = document.querySelectorAll("#gift-status #radioy");
-	var radioNo = document.querySelectorAll("#gift-status #radion");
+function addGiftStatus() {
 	
-	var ao = new Hammer(saveButton);
-	ao.on('tap', function (ev) {
-
-		if (radioYes[0].checked) {
-			db.transaction(function (trans) {
-				trans.executeSql("UPDATE gifts SET purchased = 1 WHERE gift_idea = '" + evTarg.id + "'", [],
-					function (tx, rs) {
-						console.log(evTarg.id + " " + "has been purchased!");
-						loadGiftsForPerson();
-					},
-					function (tx, err) {
-						console.info(err.message);
-					});
-			});
-
-		} else if (radioNo[0].checked) {
-			db.transaction(function (trans) {
-				trans.executeSql("UPDATE gifts SET purchased = 0 WHERE gift_idea = '" + evTarg.id + "'", [],
-					function (tx, rs) {
-						console.log(evTarg.id + " " + "is not yet purchased!");
-						loadGiftsForPerson();
-					},
-					function (tx, err) {
-						console.info(err.message);
-					});
-			});
-		}
-	});
 }
-
 // Database transaction errors
 function transErr(err) {
 	console.log(err);
